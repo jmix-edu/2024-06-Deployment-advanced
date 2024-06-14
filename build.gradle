@@ -1,6 +1,7 @@
 plugins {
     id 'io.jmix' version '2.2.3'
     id 'java'
+    id 'com.palantir.docker' version '0.36.0'
 }
 
 apply plugin: 'org.springframework.boot'
@@ -35,14 +36,26 @@ dependencies {
     implementation 'io.jmix.datatools:jmix-datatools-starter'
     implementation 'io.jmix.datatools:jmix-datatools-flowui-starter'
 
+    implementation 'org.springframework.cloud:spring-cloud-starter-vault-config:4.1.0'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    implementation "org.springframework.boot:spring-boot-starter-undertow"
+    modules {
+        module("org.springframework.boot:spring-boot-starter-tomcat") {
+            replacedBy("org.springframework.boot:spring-boot-starter-undertow", "Use Undertow instead of Apache Tomcat")
+        }
+    }
+
+    implementation 'com.hazelcast:hazelcast'
+
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
-    runtimeOnly 'org.hsqldb:hsqldb'
 
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
     }
     testImplementation 'io.jmix.flowui:jmix-flowui-test-assist'
+    implementation 'org.postgresql:postgresql'
 }
 
 test {
@@ -51,4 +64,15 @@ test {
 
 vaadin {
     optimizeBundle = false
+}
+
+docker {
+    dependsOn(tasks.bootJar)
+    name "$rootProject.name:$version"
+    dockerfile file('docker/Dockerfile.layered')
+    files tasks.bootJar.outputs
+}
+
+bootBuildImage {
+    imageName = "jmix_pm_spring_boot_image"
 }
